@@ -2,11 +2,16 @@
 #include "utils.h"
 #include <iostream>
 #include <sys/socket.h>
-#include <error.h>
+#include <errno.h>
 #include <arpa/inet.h>
 #include <cstring>
+#include <unistd.h>
 
 #define MAX_LINE 4096
+
+using std::cout;
+using std::cerr;
+using std::endl;
 
 void print_help();
 
@@ -70,7 +75,7 @@ int main(int argc, char *argv[])
 			continue;
 		}
 
-		memset(buff, 0, MAX_LEN);
+		memset(buff, 0, MAX_LINE);
 		int len = recv(socket_fd, buff, MAX_LINE, 0);
 		if(len < 0) {
 			cerr << "recv error:" << strerror(errno) << ", erron:" << errno << endl;

@@ -35,7 +35,7 @@ Node *str_to_node(const std::string &str)
 
 std::string node_to_str(const Node *node)
 {
-	string str;
+	std::string str;
 	if(node == NULL) {
 		return str;
 	}

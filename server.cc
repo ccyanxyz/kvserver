@@ -3,10 +3,16 @@
 #include <iostream>
 #include <mutex>
 #include <thread>
-#include <error.h>
+#include <errno.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 
-#define MAX_LEN 4096
+#define MAX_LINE 4096
+
+using std::cout;
+using std::cerr;
+using std::endl;
 
 static std::mutex put_mutex, get_mutex;
 
@@ -53,7 +59,7 @@ int main(int argc, char *argv[])
 			continue;
 		}
 		cout << "client " << connected_fd - 3 << " connected from:" << inet_ntoa(client_addr.sin_addr) << ":" << htons(client_addr.sin_port) << endl;
-		thread client(handle_connection, connected_fd);
+		std::thread client(handle_connection, connected_fd);
 		client.detach();
 	}
 
@@ -67,7 +73,7 @@ void handle_connection(int socket_fd)
 	memset(buff, 0, MAX_LINE);
 
 	while(true) {
-		int len = recv(socket_fd, buff, MAX_LEN, 0);
+		int len = recv(socket_fd, buff, MAX_LINE, 0);
 		if(len == 0) {
 			continue;
 		}
@@ -78,7 +84,7 @@ void handle_connection(int socket_fd)
 		if(vec[0] == "save") {
 			// cache.save_cache();
 			static const std::string info = "all cache saved";
-			if(send(socket_fd, info, MAX_LINE, 0) == -1) {
+			if(send(socket_fd, info.c_str(), MAX_LINE, 0) == -1) {
 				cerr << "send error" << endl;
 			}
 			cout << info << endl;
@@ -110,7 +116,7 @@ void handle_connection(int socket_fd)
 			cout << "put success" << endl;
 		} else {
 			static const std::string info = "command error, try again";
-			if(send(socket_fd, info, MAX_LINE, 0) == -1) {
+			if(send(socket_fd, info.c_str(), MAX_LINE, 0) == -1) {
 				cerr << "send error" << endl;
 			}
 			cout << info << endl;
