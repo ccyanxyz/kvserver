@@ -1,5 +1,6 @@
 #include "node.h"
 #include "utils.h"
+#include "cache.h"
 #include <iostream>
 #include <mutex>
 #include <thread>
@@ -15,6 +16,7 @@ using std::cerr;
 using std::endl;
 
 static std::mutex put_mutex, get_mutex;
+static Cache cache;
 
 static void handle_connection(int socket_fd);
 
@@ -82,7 +84,7 @@ void handle_connection(int socket_fd)
 			break;
 		}
 		if(vec[0] == "save") {
-			// cache.save_cache();
+			cache.save_cache();
 			static const std::string info = "all cache saved";
 			if(send(socket_fd, info.c_str(), MAX_LINE, 0) == -1) {
 				cerr << "send error" << endl;
@@ -93,8 +95,7 @@ void handle_connection(int socket_fd)
 		memset(buff, 0, MAX_LINE);
 		if(vec.size() == 2 && vec[0] == "get") {
 			put_mutex.lock();
-			//std::string value = cache.get(v[1]);
-			std::string value;
+			std::string value = cache.get(vec[1]);
 			put_mutex.unlock();
 			if(send(socket_fd, ("get-" + value).c_str(), MAX_LINE, 0) == -1) {
 				cerr << "send error" << endl;
@@ -107,7 +108,7 @@ void handle_connection(int socket_fd)
 		} else if(vec.size() == 3 && vec[0] == "put") {
 			put_mutex.lock();
 			get_mutex.lock();
-			// cache.put(vec[1], vec[2]);
+			cache.put(vec[1], vec[2]);
 			get_mutex.unlock();
 			put_mutex.unlock();
 			if(send(socket_fd, "put-SUCCESS", MAX_LINE, 0) == -1) {

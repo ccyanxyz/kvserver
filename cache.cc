@@ -17,7 +17,6 @@ public:
 class Cache::Page {
 public:
 	int file_num;
-	int data_index;
 	bool lock;
 	bool dirty;
 	class Node data[PAGE_SIZE];
@@ -25,7 +24,6 @@ public:
 	Page()
 	{
 		file_num = -1;
-		data_index = 0;
 		lock = false;
 		dirty = false;
 		prev = next = NULL;
@@ -37,6 +35,7 @@ Cache::Cache(int capacity_)
 	capacity = capacity_;
 	file_index = load_file_index();
 	current_page_flag = false;
+	data_index = 0;
 
 	entries = new Page[capacity];
 	for(int i = 0; i < capacity; ++i) {
@@ -120,7 +119,6 @@ void Cache::put(std::string key, std::string value)
 			current_page_flag = true;
 			current_page->file_num = ++file_index;
 			current_page->dirty = true;
-			current_page->data_index = 0;
 			for(int i = 0; i < PAGE_SIZE; ++i) {
 				current_page->data[i].key = "";
 				current_page->data[i].value = "";
@@ -132,7 +130,6 @@ void Cache::put(std::string key, std::string value)
 		current_page->data[data_index].value = value;
 		table[key] = current_page->data + data_index;
 		++data_index;
-		current_page->data_index += 1;
 		detach(current_page);
 		attach(current_page);
 	}
@@ -154,8 +151,6 @@ bool Cache::load_file_to_page(const int &file_num, Page *page, std::unordered_ma
 			data[i].key = "";
 			data[i].value = "";
 			data[i].page = page;
-		} else {
-			page->data_index += 1;
 		}
 		table[data[i].key] = data + i;
 	}
@@ -172,7 +167,7 @@ bool Cache::save_page_to_file(Page *page)
 	std::string filename = std::to_string(page->file_num) + ".dat";
 	ofstream out(filename);
 	Node *data = page->data;
-	for(int i = 0; i < page->data_index; ++i) {
+	for(int i = 0; i < PAGE_SIZE; ++i) {
 		out << data[i].key << " " << data[i].value << endl;
 	}
 	out.close();
@@ -239,19 +234,6 @@ void Cache::attach(Page *page)
 Cache::Page *Cache::get_new_page()
 {
 	Page *page;
-	// search for page not full yet
-	page = head->next;
-	while(page != tail) {
-		if(page->data_index < PAGE_SIZE) {
-			break;
-		}
-		page = page->next;
-	}
-	
-	if(page != tail) {
-		return page;
-	}
-
 	if(free_entries.empty()) {
 		// cache full, swap tail page out
 		page = tail->prev;
