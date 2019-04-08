@@ -17,7 +17,6 @@ private:
 	std::vector<Page *> free_entries;
 
 	std::unordered_map<std::string, Node *> table;
-	std::unordered_map<std::string, int> key_file_map;
 	std::unordered_map<int, bool> file_list;
 	Page *current_page;
 	bool current_page_flag;
