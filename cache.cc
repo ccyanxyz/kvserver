@@ -251,3 +251,12 @@ Cache::Page *Cache::get_new_page()
 	free_entries.pop_back();
 	return page;
 }
+
+std::vector<std::string> Cache::get_keys()
+{
+	std::vector<std::string> keys;
+	for(auto it = table.begin(); it != table.end(); ++it) {
+		keys.push_back(it->first);
+	}
+	return keys;
+}

@@ -8,7 +8,7 @@
 
 class Cache {
 private:
-	const static int PAGE_SIZE = 2;
+	const static int PAGE_SIZE = 1000;
 	int capacity;
 
 	class Page;
@@ -45,6 +45,7 @@ public:
 	void save_cache();
 	std::string get(std::string key);
 	void put(std::string key, std::string value);
+	std::vector<std::string> get_keys();
 };
 
 #endif
