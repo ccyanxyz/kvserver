@@ -71,9 +71,9 @@ Cache::Node *Cache::search(std::string key)
 		detach(page);
 		attach(page);
 	} else {
-		/*
+#ifdef NO_MAP
 		// without key_file_map
-		for(int i = file_index; i >= 0; --i) {
+		for(int i = file_index; i > 0; --i) {
 			if(file_list[i] == true) {
 				continue;
 			}
@@ -92,7 +92,7 @@ Cache::Node *Cache::search(std::string key)
 				free_entries.push_back(page);
 			}
 		}
-		*/
+#else
 		int file_num = key_file_map[key];
 		// no such key
 		if(file_num == 0) {
@@ -105,6 +105,7 @@ Cache::Node *Cache::search(std::string key)
 		if((node = table[key]) != NULL) {
 			attach(page);
 		} 
+#endif
 	}
 	return node;
 }
@@ -136,6 +137,7 @@ void Cache::put(std::string key, std::string value)
 			current_page_flag = true;
 			current_page->file_num = ++file_index;
 			current_page->dirty = true;
+			file_list[file_index] = true;
 			for(int i = 0; i < PAGE_SIZE; ++i) {
 				current_page->data[i].key = "";
 				current_page->data[i].value = "";
