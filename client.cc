@@ -109,5 +109,7 @@ int main(int argc, char *argv[])
 
 void print_help()
 {
-
+	cout << "put <key>:<value>  store a key-value pair" << endl;
+	cout << "get <key>  get the <value> of <key>" << endl;
+	cout << "exit  exit client" << endl;
 }
