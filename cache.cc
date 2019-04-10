@@ -34,6 +34,7 @@ Cache::Cache(int capacity_)
 {
 	capacity = capacity_;
 	file_index = load_file_index();
+	load_key_file_map();
 	current_page_flag = false;
 	data_index = 0;
 
@@ -70,6 +71,8 @@ Cache::Node *Cache::search(std::string key)
 		detach(page);
 		attach(page);
 	} else {
+		/*
+		// without key_file_map
 		for(int i = file_index; i >= 0; --i) {
 			if(file_list[i] == true) {
 				continue;
@@ -89,6 +92,19 @@ Cache::Node *Cache::search(std::string key)
 				free_entries.push_back(page);
 			}
 		}
+		*/
+		int file_num = key_file_map[key];
+		// no such key
+		if(file_num == 0) {
+			return node;
+		}
+		page = get_new_page();
+		if(load_file_to_page(file_num, page, table) == false) {
+			free_entries.push_back(page);
+		}
+		if((node = table[key]) != NULL) {
+			attach(page);
+		} 
 	}
 	return node;
 }
@@ -113,6 +129,7 @@ void Cache::put(std::string key, std::string value)
 	} else {
 		if(data_index == PAGE_SIZE || current_page_flag == false) {
 			data_index = 0;
+			save_key_file_map(current_page);
 		}
 		if(data_index == 0 || current_page_flag == false) {
 			current_page = get_new_page();
@@ -215,6 +232,7 @@ void Cache::save_cache()
 		page = page->next;
 	}
 	save_file_index();
+	save_key_file_map(current_page);
 }
 
 void Cache::detach(Page *page)
@@ -239,6 +257,7 @@ Cache::Page *Cache::get_new_page()
 		page = tail->prev;
 		if(page == current_page) {
 			current_page_flag = false;
+			save_key_file_map(current_page);
 		}
 		if(page->dirty) {
 			save_page_to_file(page);
@@ -259,4 +278,35 @@ std::vector<std::string> Cache::get_keys()
 		keys.push_back(it->first);
 	}
 	return keys;
+}
+
+bool Cache::load_key_file_map(const std::string &filename)
+{
+	ifstream in(filename);
+	if(!in) {
+		return false;
+	}
+	std::string key;
+	int file_num;
+	while(in >> key >> file_num) {
+		key_file_map[key] = file_num;
+	}
+	in.close();
+	return true;
+}
+
+bool Cache::save_key_file_map(Page *page, const std::string &filename)
+{
+	ofstream out(filename, std::ios::app);
+	if(!out || page == NULL) {
+		return false;
+	}
+	Node *data = page->data;
+	int file_num = page->file_num;
+	for(int i = 0; i < PAGE_SIZE; ++i) {
+		key_file_map[data[i].key] = file_num;
+		out << data[i].key << " " << file_num << endl;
+	}
+	out.close();
+	return true;
 }

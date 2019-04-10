@@ -17,6 +17,7 @@ private:
 	std::vector<Page *> free_entries;
 
 	std::unordered_map<std::string, Node *> table;
+	std::unordered_map<std::string, int> key_file_map;
 	std::unordered_map<int, bool> file_list;
 	Page *current_page;
 	bool current_page_flag;
@@ -38,6 +39,9 @@ private:
 
 	int load_file_index(const std::string &filename = "file_index.dat");
 	bool save_file_index(const std::string &filename = "file_index.dat");
+
+	bool load_key_file_map(const std::string &filename = "key_file.dat");
+	bool save_key_file_map(Page *page, const std::string &filename = "key_file.dat");
 
 public:
 	Cache(int capacity_ = 2);
