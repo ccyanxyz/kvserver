@@ -26,4 +26,4 @@ Test2: page size 1000, cache size 50 pages, with key_file_map:
 		average speed:3479.82 records/sec
 
 
-Page fault will slow down the write speed dramatically without key_file_map.
+Without key_file_map, page fault will slow down the write speed dramatically.
