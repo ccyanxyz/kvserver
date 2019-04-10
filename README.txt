@@ -20,3 +20,7 @@ WRITE:50000 key-value pairs, string length 4
 WRITE:60000 key-value pairs, string length 4
 	time used:0.720679 seconds
 	average speed:83254.8 records/sec
+
+WRITE:1000000 key-value pairs, string length 4
+	time used:287.371 seconds
+	average speed:3479.82 records/sec
