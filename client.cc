@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <arpa/inet.h>
 #include <cstring>
+#include <csignal>
 #include <unistd.h>
 
 #define MAX_LINE 4096
@@ -13,7 +14,10 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
-void print_help();
+
+static int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+static void print_help();
+static void handle_interrupt(int signum);
 
 int main(int argc, char *argv[])
 {
@@ -22,7 +26,10 @@ int main(int argc, char *argv[])
 		exit(0);
 	}
 
-	int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+	// register SIGINT
+	signal(SIGINT, handle_interrupt);
+
+	// int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if(socket_fd < 0) {
 		cerr << "create socket error:" << strerror(errno) << ", errno:" << errno << endl;
 		exit(0);
@@ -112,4 +119,11 @@ void print_help()
 	cout << "put <key>:<value>  store a key-value pair" << endl;
 	cout << "get <key>  get the <value> of <key>" << endl;
 	cout << "exit  exit client" << endl;
+}
+
+void handle_interrupt(int signum)
+{
+	std::string str("exit");
+	send(socket_fd, str.c_str(), str.length(), 0);
+	exit(0);
 }

@@ -1,9 +1,11 @@
 #include "node.h"
 #include "utils.h"
 #include "cache.h"
+#include "thread_pool.h"
 #include <iostream>
 #include <mutex>
 #include <thread>
+#include <csignal>
 #include <errno.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -19,6 +21,7 @@ static std::mutex put_mutex, get_mutex;
 static Cache cache;
 
 static void handle_connection(int socket_fd);
+static void handle_interrupt(int signum);
 
 int main(int argc, char *argv[])
 {
@@ -26,6 +29,9 @@ int main(int argc, char *argv[])
 		cerr << "Usage: ./server <port>" << endl;
 		exit(0);
 	}
+
+	// register signal SIGINT and interrupt handler
+	signal(SIGINT, handle_interrupt);
 
 	int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if(socket_fd == -1) {
@@ -53,6 +59,8 @@ int main(int argc, char *argv[])
 		exit(0);
 	}
 
+	ThreadPool tp(3);
+
 	cout << "waiting for connection..." << endl;
 	while(true) {
 		int connected_fd = accept(socket_fd, (struct sockaddr *) &client_addr, (socklen_t *) &sin_addr_len);
@@ -60,13 +68,19 @@ int main(int argc, char *argv[])
 			cerr << "accept socket error:" << strerror(errno) << ", errno:" << errno << endl;
 			continue;
 		}
-		cout << "client " << connected_fd - 3 << " connected from:" << inet_ntoa(client_addr.sin_addr) << ":" << htons(client_addr.sin_port) << endl;
-		std::thread client(handle_connection, connected_fd);
-		client.detach();
+		tp.commit(handle_connection, connected_fd);
+		cout << "client " << connected_fd - 3 << " connected from:" << inet_ntoa(client_addr.sin_addr) << ":" << htons(client_addr.sin_port) << ", idle thread number:" << tp.get_idle_num() << endl;
 	}
 
 	close(socket_fd);
 	return 0;
+}
+
+void handle_interrupt(int signum)
+{
+	cache.save_cache();
+	cout << "interrupt, server exited safely" << endl;
+	exit(0);
 }
 
 void handle_connection(int socket_fd)

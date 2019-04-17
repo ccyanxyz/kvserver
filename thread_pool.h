@@ -10,6 +10,8 @@
 #include <functional>
 #include <stdexcept>
 
+#include <iostream>
+
 class ThreadPool {
 	using Task = std::function<void()>;
 
